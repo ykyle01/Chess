@@ -9,7 +9,7 @@ winner = None
 draw = False
 width = 480
 height = 480
-white = (240,217,181)
+white_background = (240,217,181)
 
 #Chess 8*8 board
 size = 60
@@ -38,6 +38,9 @@ w_knight = pg.transform.scale(w_knight, (size, size))
 w_king = pg.transform.scale(w_king, (size, size))
 w_queen = pg.transform.scale(w_queen, (size, size))
 
+#Classify pieces
+white = {w_pawn, w_rook, w_bishop, w_knight, w_king, w_queen}
+
 #Set initial board
 board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,[w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
 
@@ -45,9 +48,19 @@ def draw_piece(piece, row, col):
     if piece is not None:
         screen.blit(piece,(col*size,row*size))
 
+def draw_highlight(row, col):
+    color = (0,0,0,127)
+    center = (col*size+size/2, row*size+size/2)
+    radius = 20
+    
+    target_rect = pg.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pg.Surface(target_rect.size, pg.SRCALPHA)
+    pg.draw.circle(shape_surf, color, (radius, radius), radius)
+    screen.blit(shape_surf, target_rect)
+
 def show_board():
     #Fill and display board
-    background_board.fill(white)
+    background_board.fill(white_background)
     for x in range(0,8,1):
         for y in range(0,8,1):
             if ((x+y)%2 == 1):
@@ -65,9 +78,11 @@ def userClick():
     col = math.trunc(x/size)
     row = math.trunc(y/size)
     
-    #Testing coordinate
-    board[row][col] = w_pawn
-    show_board()
+    if BW == "w" and board[row][col] in white:
+        show_board()
+        #Testing opacity
+        draw_highlight(row,col)
+    
 
 show_board()
 
