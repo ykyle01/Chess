@@ -153,7 +153,7 @@ def get_rook_moves(piece, row, col, available_moves, stop_at_one):
     if (piece == b_rook):
         opposite_color = white
     #Go in each horizontal/vertical direction until stopped
-    for row_direction,col_direction in [(-1,0),(1,0),(0,-1),(0,1)]:
+    for row_direction, col_direction in [(-1,0),(1,0),(0,-1),(0,1)]:
         go_direction(row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one)
 
 #Handles queen movement
@@ -174,6 +174,14 @@ def get_king_moves(piece, row, col, available_moves):
     elif piece == b_king:
         get_queen_moves(b_queen, row, col, available_moves, True)
 
+#Handles knight movement
+def get_knight_moves(piece, row, col, available_moves):
+    opposite_color = black
+    if (piece == b_knight):
+        opposite_color = white
+    for row_direction, col_direction in [(-2,-1),(-2,1),(-1,-2),(-1,2),(1,-2),(1,2),(2,-1),(2,1)]:
+        go_direction(row, col, opposite_color, row_direction, col_direction, available_moves, True)
+
 #Finds all possible moves for a given piece in a given position
 def get_available_moves(piece, row, col):
     available_moves = []
@@ -187,6 +195,8 @@ def get_available_moves(piece, row, col):
         get_queen_moves(piece, row, col, available_moves, False)
     elif (piece == w_king or piece == b_king):
         get_king_moves(piece, row, col, available_moves)
+    elif (piece == w_knight or piece == b_knight):
+        get_knight_moves(piece, row, col, available_moves)
     return available_moves
 
 #Draws the highlights for all available moves
