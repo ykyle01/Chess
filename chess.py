@@ -91,31 +91,64 @@ def show_board():
             piece = board[row][col]
             draw_piece(piece, row, col)
 
+def in_bounds(row, col):
+    return 0<=row and row<=7 and 0<=col and col<=7
+
+#Handles pawn movement
+def get_pawn_moves(piece, row, col, available_moves):
+    #White pawn
+    direction = -1
+    starting_row = 6
+    opposite_color = black
+    #Black pawn
+    if (piece == b_pawn):
+        direction = 1
+        starting_row = 1
+        opposite_color = white
+    #Single forward
+    if in_bounds(row+direction,col) and board[row+direction][col] is None:
+        available_moves.append((row+direction,col))
+        #Double forward
+        if (row == starting_row and board[row+2*direction][col] is None):
+            available_moves.append((row+2*direction,col))
+    #Captures (no en passant)
+    if in_bounds(row+direction,col-1) and board[row+direction][col-1] in opposite_color:
+        available_moves.append((row+direction,col-1))
+    if in_bounds(row+direction,col+1) and board[row+direction][col+1] in opposite_color:
+        available_moves.append((row+direction,col+1))
+
+#Handles bishop movement
+def get_bishop_moves(piece, row, col, available_moves):
+    opposite_color = black
+    if (piece == b_bishop):
+        opposite_color = white
+    #Go in each diagonal direction until stopped
+    for row_direction in [-1,1]:
+        for col_direction in [-1,1]:
+            stop = False
+            i = 1
+            while not stop:
+                row_adjusted = row+i*row_direction
+                col_adjusted = col+i*col_direction
+                if in_bounds(row_adjusted, col_adjusted):
+                    if board[row_adjusted][col_adjusted] is None:
+                        available_moves.append((row_adjusted, col_adjusted))
+                    elif board[row_adjusted][col_adjusted] in opposite_color:
+                        available_moves.append((row_adjusted,col_adjusted))
+                        stop = True
+                    else:
+                        stop = True
+                else:
+                    stop = True
+                i = i+1
+
 #Finds all possible moves for a given piece in a given position
 def get_available_moves(piece, row, col):
     available_moves = []
-    #Handles white and black pawn movement
     if (piece == w_pawn or piece == b_pawn):
-        #White pawn
-        direction = -1
-        starting_row = 6
-        opposite_color = black
-        #Black pawn
-        if (piece == b_pawn):
-            direction = 1
-            starting_row = 1
-            opposite_color = white
-        #Single forward
-        if board[row+direction][col] is None:
-            available_moves.append((row+direction,col))
-            #Double forward
-            if (row == starting_row and board[row+2*direction][col] is None):
-                available_moves.append((row+2*direction,col))
-        #Captures (no en passant)
-        if board[row+direction][col-1] in opposite_color:
-            available_moves.append((row+direction,col-1))
-        if board[row+direction][col+1] in opposite_color:
-            available_moves.append((row+direction,col+1))
+        get_pawn_moves(piece, row, col, available_moves)
+    elif (piece == w_bishop or piece == b_bishop):
+        get_bishop_moves(piece, row, col, available_moves)
     return available_moves
 
 #Draws the highlights for all available moves
@@ -153,6 +186,7 @@ def userClick():
         board[selection[1]][selection[2]] = None
         selection = (None, -1, -1)
         show_board()
+        available_moves = []
         white_turn = not white_turn
     #Cancel selection
     elif board[row][col] is None:
