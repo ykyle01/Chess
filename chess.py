@@ -42,7 +42,11 @@ w_queen = pg.transform.scale(w_queen, (size, size))
 white = {w_pawn, w_rook, w_bishop, w_knight, w_king, w_queen}
 
 #Set initial board
-board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,[w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
+board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,[w_pawn]*8,[w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
+
+#Handling selected piece - Selection is formatted (piece, row, col)
+available_moves = []
+selection = (None, -1, -1)
 
 def draw_piece(piece, row, col):
     if piece is not None:
@@ -72,16 +76,43 @@ def show_board():
             piece = board[row][col]
             draw_piece(piece, row, col)
 
+def get_available_moves(piece, row, col):
+    available_moves = []
+    if (piece == w_pawn and board[row-1][col] is None):
+        available_moves.append((row-1,col))
+        if (row == 6 and board[row-2][col] is None):
+            available_moves.append((row-2,col))
+    return available_moves
+
+def highlight_available_moves(available_moves):
+    for row, col in available_moves:
+        draw_highlight(row,col)
+
 def userClick():
     #Get coordinates of mouse click
     x,y = pg.mouse.get_pos()
     col = math.trunc(x/size)
     row = math.trunc(y/size)
-    
-    if BW == "w" and board[row][col] in white:
+    piece = board[row][col]
+
+    #Operates based on piece color and turn
+    global available_moves
+    global selection
+    if BW == "w" and piece in white:
         show_board()
-        #Testing opacity
-        draw_highlight(row,col)
+        available_moves = get_available_moves(piece, row, col)
+        highlight_available_moves(available_moves)
+        selection = (piece, row, col)
+    elif (row,col) in available_moves:
+        board[row][col] = selection[0]
+        board[selection[1]][selection[2]] = None
+        selection = (None, -1, -1)
+        show_board()
+    elif board[row][col] is None:
+        available_moves = []
+        selection = (None, -1, -1)
+        show_board()
+
     
 
 show_board()
