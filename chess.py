@@ -4,7 +4,7 @@ import time
 import math
 
 #Initialize global variables
-BW = "w"
+white_turn = True
 winner = None
 draw = False
 width = 480
@@ -29,6 +29,12 @@ w_bishop = pg.image.load('images/Chess_blt60.png')
 w_knight = pg.image.load('images/Chess_nlt60.png')
 w_king = pg.image.load('images/Chess_klt60.png')
 w_queen = pg.image.load('images/Chess_qlt60.png')
+b_pawn = pg.image.load('images/Chess_pdt60.png')
+b_rook = pg.image.load('images/Chess_rdt60.png')
+b_bishop = pg.image.load('images/Chess_bdt60.png')
+b_knight = pg.image.load('images/Chess_ndt60.png')
+b_king = pg.image.load('images/Chess_kdt60.png')
+b_queen = pg.image.load('images/Chess_qdt60.png')
 
 #Resize images
 w_pawn = pg.transform.scale(w_pawn, (size, size))
@@ -37,12 +43,21 @@ w_bishop = pg.transform.scale(w_bishop, (size, size))
 w_knight = pg.transform.scale(w_knight, (size, size))
 w_king = pg.transform.scale(w_king, (size, size))
 w_queen = pg.transform.scale(w_queen, (size, size))
+b_pawn = pg.transform.scale(b_pawn, (size, size))
+b_rook = pg.transform.scale(b_rook, (size, size))
+b_bishop = pg.transform.scale(b_bishop, (size, size))
+b_knight = pg.transform.scale(b_knight, (size, size))
+b_king = pg.transform.scale(b_king, (size, size))
+b_queen = pg.transform.scale(b_queen, (size, size))
 
 #Classify pieces
 white = {w_pawn, w_rook, w_bishop, w_knight, w_king, w_queen}
+black = {b_pawn, b_rook, b_bishop, b_knight, b_king, b_queen}
 
 #Set initial board
-board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,[w_pawn]*8,[w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
+board = [[b_rook,b_knight,b_bishop,b_queen,b_king,b_bishop,b_knight,b_rook],
+        [b_pawn]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,
+        [w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
 
 #Handling selected piece - Selection is formatted (piece, row, col)
 available_moves = []
@@ -76,14 +91,34 @@ def show_board():
             piece = board[row][col]
             draw_piece(piece, row, col)
 
+#Finds all possible moves for a given piece in a given position
 def get_available_moves(piece, row, col):
     available_moves = []
-    if (piece == w_pawn and board[row-1][col] is None):
-        available_moves.append((row-1,col))
-        if (row == 6 and board[row-2][col] is None):
-            available_moves.append((row-2,col))
+    #Handles white and black pawn movement
+    if (piece == w_pawn or piece == b_pawn):
+        #White pawn
+        direction = -1
+        starting_row = 6
+        opposite_color = black
+        #Black pawn
+        if (piece == b_pawn):
+            direction = 1
+            starting_row = 1
+            opposite_color = white
+        #Single forward
+        if board[row+direction][col] is None:
+            available_moves.append((row+direction,col))
+            #Double forward
+            if (row == starting_row and board[row+2*direction][col] is None):
+                available_moves.append((row+2*direction,col))
+        #Captures (no en passant)
+        if board[row+direction][col-1] in opposite_color:
+            available_moves.append((row+direction,col-1))
+        if board[row+direction][col+1] in opposite_color:
+            available_moves.append((row+direction,col+1))
     return available_moves
 
+#Draws the highlights for all available moves
 def highlight_available_moves(available_moves):
     for row, col in available_moves:
         draw_highlight(row,col)
@@ -98,16 +133,28 @@ def userClick():
     #Operates based on piece color and turn
     global available_moves
     global selection
-    if BW == "w" and piece in white:
+    global white_turn
+
+    #White choosing piece to move
+    if white_turn and piece in white:
         show_board()
         available_moves = get_available_moves(piece, row, col)
         highlight_available_moves(available_moves)
         selection = (piece, row, col)
+    #Black choosing piece to move
+    elif not white_turn and piece in black:
+        show_board()
+        available_moves = get_available_moves(piece, row, col)
+        highlight_available_moves(available_moves)
+        selection = (piece, row, col)
+    #Make move
     elif (row,col) in available_moves:
         board[row][col] = selection[0]
         board[selection[1]][selection[2]] = None
         selection = (None, -1, -1)
         show_board()
+        white_turn = not white_turn
+    #Cancel selection
     elif board[row][col] is None:
         available_moves = []
         selection = (None, -1, -1)
