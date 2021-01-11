@@ -117,63 +117,62 @@ def get_pawn_moves(piece, row, col, available_moves):
     if in_bounds(row+direction,col+1) and board[row+direction][col+1] in opposite_color:
         available_moves.append((row+direction,col+1))
 
+#Goes in a direction until stopped
+def go_direction(row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one):
+    stop = False
+    i = 1
+    while not stop:
+        row_adjusted = row+i*row_direction
+        col_adjusted = col+i*col_direction
+        if in_bounds(row_adjusted, col_adjusted):
+            if board[row_adjusted][col_adjusted] is None:
+                available_moves.append((row_adjusted, col_adjusted))
+            elif board[row_adjusted][col_adjusted] in opposite_color:
+                available_moves.append((row_adjusted,col_adjusted))
+                stop = True
+            else:
+                stop = True
+        else:
+            stop = True
+        if stop_at_one:
+            stop = True
+        i = i+1
+
 #Handles bishop movement
-def get_bishop_moves(piece, row, col, available_moves):
+def get_bishop_moves(piece, row, col, available_moves, stop_at_one):
     opposite_color = black
     if (piece == b_bishop):
         opposite_color = white
     #Go in each diagonal direction until stopped
     for row_direction, col_direction in [(-1,-1),(-1,1),(1,-1),(1,1)]:
-        stop = False
-        i = 1
-        while not stop:
-            row_adjusted = row+i*row_direction
-            col_adjusted = col+i*col_direction
-            if in_bounds(row_adjusted, col_adjusted):
-                if board[row_adjusted][col_adjusted] is None:
-                    available_moves.append((row_adjusted, col_adjusted))
-                elif board[row_adjusted][col_adjusted] in opposite_color:
-                    available_moves.append((row_adjusted,col_adjusted))
-                    stop = True
-                else:
-                    stop = True
-            else:
-                stop = True
-            i = i+1
+        go_direction(row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one)
 
 #Handles rook movement
-def get_rook_moves(piece, row, col, available_moves):
+def get_rook_moves(piece, row, col, available_moves, stop_at_one):
     opposite_color = black
     if (piece == b_rook):
         opposite_color = white
     #Go in each horizontal/vertical direction until stopped
     for row_direction,col_direction in [(-1,0),(1,0),(0,-1),(0,1)]:
-        stop = False
-        i = 1
-        while not stop:
-            row_adjusted = row+i*row_direction
-            col_adjusted = col+i*col_direction
-            if in_bounds(row_adjusted, col_adjusted):
-                if board[row_adjusted][col_adjusted] is None:
-                    available_moves.append((row_adjusted, col_adjusted))
-                elif board[row_adjusted][col_adjusted] in opposite_color:
-                    available_moves.append((row_adjusted,col_adjusted))
-                    stop = True
-                else:
-                    stop = True
-            else:
-                stop = True
-            i = i+1
+        go_direction(row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one)
 
 #Handles queen movement
-def get_queen_moves(piece, row, col, available_moves):
+def get_queen_moves(piece, row, col, available_moves, stop_at_one):
     #Queens are combinations of bishops and rooks
     if piece == w_queen:
-        get_bishop_moves(w_bishop, row, col, available_moves)
-        get_rook_moves(w_rook, row, col, available_moves)
+        get_bishop_moves(w_bishop, row, col, available_moves, stop_at_one)
+        get_rook_moves(w_rook, row, col, available_moves, stop_at_one)
     elif piece == b_queen:
-        get_bishop_moves(b_bishop, row, col, available_moves)
-        get_rook_moves(b_rook, row, col, available_moves)
+        get_bishop_moves(b_bishop, row, col, available_moves, stop_at_one)
+        get_rook_moves(b_rook, row, col, available_moves, stop_at_one)
+
+#Handles king movement
+def get_king_moves(piece, row, col, available_moves):
+    #Kings are queens that can only move one square
+    if piece == w_king:
+        get_queen_moves(w_queen, row, col, available_moves, True)
+    elif piece == b_king:
+        get_queen_moves(b_queen, row, col, available_moves, True)
 
 #Finds all possible moves for a given piece in a given position
 def get_available_moves(piece, row, col):
@@ -181,11 +180,13 @@ def get_available_moves(piece, row, col):
     if (piece == w_pawn or piece == b_pawn):
         get_pawn_moves(piece, row, col, available_moves)
     elif (piece == w_bishop or piece == b_bishop):
-        get_bishop_moves(piece, row, col, available_moves)
+        get_bishop_moves(piece, row, col, available_moves, False)
     elif (piece == w_rook or piece == b_rook):
-        get_rook_moves(piece, row, col, available_moves)
+        get_rook_moves(piece, row, col, available_moves, False)
     elif (piece == w_queen or piece == b_queen):
-        get_queen_moves(piece, row, col, available_moves)
+        get_queen_moves(piece, row, col, available_moves, False)
+    elif (piece == w_king or piece == b_king):
+        get_king_moves(piece, row, col, available_moves)
     return available_moves
 
 #Draws the highlights for all available moves
