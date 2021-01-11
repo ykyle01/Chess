@@ -123,24 +123,57 @@ def get_bishop_moves(piece, row, col, available_moves):
     if (piece == b_bishop):
         opposite_color = white
     #Go in each diagonal direction until stopped
-    for row_direction in [-1,1]:
-        for col_direction in [-1,1]:
-            stop = False
-            i = 1
-            while not stop:
-                row_adjusted = row+i*row_direction
-                col_adjusted = col+i*col_direction
-                if in_bounds(row_adjusted, col_adjusted):
-                    if board[row_adjusted][col_adjusted] is None:
-                        available_moves.append((row_adjusted, col_adjusted))
-                    elif board[row_adjusted][col_adjusted] in opposite_color:
-                        available_moves.append((row_adjusted,col_adjusted))
-                        stop = True
-                    else:
-                        stop = True
+    for row_direction, col_direction in [(-1,-1),(-1,1),(1,-1),(1,1)]:
+        stop = False
+        i = 1
+        while not stop:
+            row_adjusted = row+i*row_direction
+            col_adjusted = col+i*col_direction
+            if in_bounds(row_adjusted, col_adjusted):
+                if board[row_adjusted][col_adjusted] is None:
+                    available_moves.append((row_adjusted, col_adjusted))
+                elif board[row_adjusted][col_adjusted] in opposite_color:
+                    available_moves.append((row_adjusted,col_adjusted))
+                    stop = True
                 else:
                     stop = True
-                i = i+1
+            else:
+                stop = True
+            i = i+1
+
+#Handles rook movement
+def get_rook_moves(piece, row, col, available_moves):
+    opposite_color = black
+    if (piece == b_rook):
+        opposite_color = white
+    #Go in each horizontal/vertical direction until stopped
+    for row_direction,col_direction in [(-1,0),(1,0),(0,-1),(0,1)]:
+        stop = False
+        i = 1
+        while not stop:
+            row_adjusted = row+i*row_direction
+            col_adjusted = col+i*col_direction
+            if in_bounds(row_adjusted, col_adjusted):
+                if board[row_adjusted][col_adjusted] is None:
+                    available_moves.append((row_adjusted, col_adjusted))
+                elif board[row_adjusted][col_adjusted] in opposite_color:
+                    available_moves.append((row_adjusted,col_adjusted))
+                    stop = True
+                else:
+                    stop = True
+            else:
+                stop = True
+            i = i+1
+
+#Handles queen movement
+def get_queen_moves(piece, row, col, available_moves):
+    #Queens are combinations of bishops and rooks
+    if piece == w_queen:
+        get_bishop_moves(w_bishop, row, col, available_moves)
+        get_rook_moves(w_rook, row, col, available_moves)
+    elif piece == b_queen:
+        get_bishop_moves(b_bishop, row, col, available_moves)
+        get_rook_moves(b_rook, row, col, available_moves)
 
 #Finds all possible moves for a given piece in a given position
 def get_available_moves(piece, row, col):
@@ -149,6 +182,10 @@ def get_available_moves(piece, row, col):
         get_pawn_moves(piece, row, col, available_moves)
     elif (piece == w_bishop or piece == b_bishop):
         get_bishop_moves(piece, row, col, available_moves)
+    elif (piece == w_rook or piece == b_rook):
+        get_rook_moves(piece, row, col, available_moves)
+    elif (piece == w_queen or piece == b_queen):
+        get_queen_moves(piece, row, col, available_moves)
     return available_moves
 
 #Draws the highlights for all available moves
@@ -193,8 +230,6 @@ def userClick():
         available_moves = []
         selection = (None, -1, -1)
         show_board()
-
-    
 
 show_board()
 
