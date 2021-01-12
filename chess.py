@@ -197,13 +197,15 @@ def get_pawn_moves(used_board, piece, row, col, available_moves, legal_check):
 
 # Goes in a direction until stopped
 def go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one, legal_check):
+    color = white
+    if opposite_color == white:
+        color = black
     stop = False
     i = 1
     while not stop:
         row_adjusted = row+i*row_direction
         col_adjusted = col+i*col_direction
-        if not in_bounds(row_adjusted, col_adjusted):
-            stop = True
+        if not in_bounds(row_adjusted, col_adjusted) or used_board[row_adjusted][col_adjusted] in color:
             break
         if (not legal_check or legal_move(row_adjusted, col_adjusted)):
             if used_board[row_adjusted][col_adjusted] is None:
@@ -213,8 +215,6 @@ def go_direction(used_board, row, col, opposite_color, row_direction, col_direct
                 stop = True
             else:
                 stop = True
-        else:
-            stop = True
         if stop_at_one:
             stop = True
         i = i+1
