@@ -87,6 +87,10 @@ board = [[b_rook,b_knight,b_bishop,b_queen,b_king,b_bishop,b_knight,b_rook],
         [b_pawn]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,
         [w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
 
+#Board to test stalemate - can delete
+# board = [[b_king, None, None, None, None, None, None, None],
+#         [None]*8,[w_king,None, None, None, None, None, None, w_queen],[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
+
 #Handling selected piece - Selection is formatted (piece, row, col)
 available_moves = []
 selection = (None, -1, -1)
@@ -343,13 +347,13 @@ def game_status():
             message = "White's Turn to Move"
         else:
             message = "Black's Turn to Move"
-    elif stalemate:
-        message = "Stalemate"
     else:
         if winner is white:
             message = "White won!"
         else:
             message = "Black won!"
+    if stalemate:
+        message = "Stalemate"
     
     screen.fill ((0, 0, 0), (0, 480, 480, 100))
     font = pg.font.Font(None, 30)
