@@ -67,8 +67,7 @@ def draw_piece(piece, row, col):
     if piece is not None:
         screen.blit(piece,(col*size,row*size))
 
-def draw_highlight(row, col):
-    color = (0,0,0,127)
+def draw_highlight(color, row, col):
     center = (col*size+size/2, row*size+size/2)
     radius = 20
     
@@ -132,9 +131,7 @@ def in_bounds(row, col):
     return 0<=row and row<=7 and 0<=col and col<=7
 
 def check_bounds_legality(used_board, row, col, opposite_color, legal_check):
-    bounds = in_bounds(row,col)
-    legality = (not legal_check or legal_move(row,col))
-    return bounds and legality
+    return in_bounds(row,col) and (not legal_check or legal_move(row,col))
 
 #Handles pawn movement
 def get_pawn_moves(used_board, piece, row, col, available_moves, legal_check):
@@ -244,7 +241,7 @@ def get_available_moves(used_board, piece, row, col, legal_check):
 #Draws the highlights for all available moves
 def highlight_available_moves(available_moves):
     for row, col in available_moves:
-        draw_highlight(row,col)
+        draw_highlight((0,0,0,127), row,col)
 
 def make_move(used_board, row, col):
     used_board[row][col] = selection[0]
@@ -265,6 +262,7 @@ def userClick():
     #Choosing piece to move
     if (white_turn and piece in white) or (not white_turn and piece in black):
         show_board()
+        draw_highlight((0,255,255,127),row,col)
         selection = (piece, row, col)
         available_moves = get_available_moves(board, piece, row, col, True)
         highlight_available_moves(available_moves)
