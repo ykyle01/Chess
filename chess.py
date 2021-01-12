@@ -6,7 +6,7 @@ import math
 #Initialize global variables
 white_turn = True
 winner = None
-draw = False
+stalemate = False
 width = 480
 height = 480
 white_background = (240,217,181)
@@ -19,7 +19,7 @@ background_board = pg.Surface((size * 8, size * 8))
 pg.init()
 fps = 30
 CLOCK = pg.time.Clock()
-screen = pg.display.set_mode((width, height),0,32)
+screen = pg.display.set_mode((width, height + 100),0,32)
 pg.display.set_caption("Chess")
 
 #Load images
@@ -49,6 +49,34 @@ b_bishop = pg.transform.scale(b_bishop, (size, size))
 b_knight = pg.transform.scale(b_knight, (size, size))
 b_king = pg.transform.scale(b_king, (size, size))
 b_queen = pg.transform.scale(b_queen, (size, size))
+
+def get_piece_name(piece):
+    output = "Unfound"
+    if piece == w_pawn:
+        output = "White pawn"
+    elif piece == w_rook:
+        output = "White rook"
+    elif piece == w_bishop:
+        output = "White bishop"
+    elif piece == w_knight:
+        output = "White knight"
+    elif piece == w_king:
+        output = "White king"
+    elif piece == w_queen:
+        output = "White queen"
+    elif piece == b_pawn:
+        output = "Black pawn"
+    elif piece == b_rook:
+        output = "Black rook"
+    elif piece == b_bishop:
+        output = "Black bishop"
+    elif piece == b_knight:
+        output = "Black knight"
+    elif piece == b_king:
+        output = "Black king"
+    elif piece == b_queen:
+        output = "Black queen"
+    return output
 
 #Classify pieces
 white = {w_pawn, w_rook, w_bishop, w_knight, w_king, w_queen}
@@ -89,6 +117,8 @@ def show_board():
         for col in range(0,8,1):
             piece = board[row][col]
             draw_piece(piece, row, col)
+    
+    game_status()
 
 #Gets all available moves for a color
 def all_available_moves(color):
@@ -106,8 +136,7 @@ def king_checked(hypothetical_board):
     color = white
     opposite_color = black
     king_position = (-1,-1)
-    opposite_available_moves = []
-    if selection[0] in black:
+    if not white_turn:
         color = black
         opposite_color = white
     for row in range(0,8,1):
@@ -115,17 +144,21 @@ def king_checked(hypothetical_board):
             piece = hypothetical_board[row][col]
             if (color == white and piece == w_king) or (color == black and piece == b_king):
                 king_position = (row,col)
-            elif (piece in opposite_color):
-                extension = get_available_moves(hypothetical_board, piece, row, col, False)
-                opposite_available_moves.extend(extension)
-    return king_position in opposite_available_moves
+    for row in range(0,8,1):
+        for col in range(0,8,1):
+            piece = hypothetical_board[row][col]
+            if (piece in opposite_color):
+                moves = get_available_moves(hypothetical_board, piece, row, col, False) 
+                if (king_position in moves):
+                    return True
+    return False
 
 def legal_move(row, col):
     hypothetical_board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
     for i in range(0,8,1):
         hypothetical_board[i] = board[i].copy()
     make_move(hypothetical_board, row, col)
-    return in_bounds(row, col) and not king_checked(hypothetical_board)
+    return not king_checked(hypothetical_board)
 
 def in_bounds(row, col):
     return 0<=row and row<=7 and 0<=col and col<=7
@@ -278,6 +311,38 @@ def userClick():
         available_moves = []
         selection = (None, -1, -1)
         show_board()
+    check_win()
+
+def check_win():
+    # if white_turn:
+    #     all_moves = all_available_moves(white)
+    # else:
+    #     all_moves = all_available_moves(black)
+    # if not all_moves and king_checked(board, )
+    game_status()
+
+def game_status():
+    if winner is None:
+        if white_turn:
+            message = "White's Turn to Move"
+        else:
+            message = "Black's Turn to Move"
+    elif stalemate:
+        message = "Stalemate"
+    else:
+        if winner is white:
+            message = "White won!"
+        else:
+            message = "Black won!"
+    
+    screen.fill ((0, 0, 0), (0, 480, 480, 100))
+    font = pg.font.Font(None, 30)
+    text = font.render(message, 1, (255, 255, 255))
+
+    # copy the rendered message onto the board
+    text_rect = text.get_rect(center=(width/2, 580-50))
+    screen.blit(text, text_rect)
+    pg.display.update()
 
 show_board()
 
