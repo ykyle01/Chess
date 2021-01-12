@@ -91,11 +91,19 @@ def show_board():
             piece = board[row][col]
             draw_piece(piece, row, col)
 
-def king_checked(move_row, move_col):
-    hypothetical_board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
-    for i in range(0,8,1):
-        hypothetical_board[i] = board[i].copy()
-    make_move(hypothetical_board, move_row, move_col)
+#Gets all available moves for a color
+def all_available_moves(color):
+    output = []
+    for row in range(0,8,1):
+        for col in range(0,8,1):
+            piece = board[row][col]
+            if (piece in color):
+                extension = get_available_moves(board, piece, row, col, True)
+                output.extend(extension)
+    return output
+
+#Ensures player cannot make a move that goes into check
+def king_checked(hypothetical_board):
     color = white
     opposite_color = black
     king_position = (-1,-1)
@@ -114,7 +122,11 @@ def king_checked(move_row, move_col):
     return king_position in opposite_available_moves
 
 def legal_move(row, col):
-    return in_bounds(row, col) and not king_checked(row, col)
+    hypothetical_board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
+    for i in range(0,8,1):
+        hypothetical_board[i] = board[i].copy()
+    make_move(hypothetical_board, row, col)
+    return in_bounds(row, col) and not king_checked(hypothetical_board)
 
 def in_bounds(row, col):
     return 0<=row and row<=7 and 0<=col and col<=7
@@ -142,9 +154,9 @@ def get_pawn_moves(used_board, piece, row, col, available_moves, legal_check):
         if (row == starting_row and check_bounds_legality(used_board, row+2*direction, col, opposite_color, legal_check) and used_board[row+2*direction][col] is None):
             available_moves.append((row+2*direction,col)) 
     #Captures (no en passant)
-    if check_bounds_legality(used_board, row+direction, col-1, opposite_color, legal_check) and used_board[row][col-1] in opposite_color:
+    if check_bounds_legality(used_board, row+direction, col-1, opposite_color, legal_check) and used_board[row+direction][col-1] in opposite_color:
         available_moves.append((row+direction,col-1))
-    if check_bounds_legality(used_board, row+direction, col+1, opposite_color, legal_check) and used_board[row][col+1] in opposite_color:
+    if check_bounds_legality(used_board, row+direction, col+1, opposite_color, legal_check) and used_board[row+direction][col+1] in opposite_color:
         available_moves.append((row+direction,col+1))
 
 #Goes in a direction until stopped
