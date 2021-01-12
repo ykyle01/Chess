@@ -117,18 +117,20 @@ def show_board():
         for col in range(0,8,1):
             piece = board[row][col]
             draw_piece(piece, row, col)
-    
-    game_status()
 
 #Gets all available moves for a color
 def all_available_moves(color):
+    global selection
     output = []
+    temp = selection
     for row in range(0,8,1):
         for col in range(0,8,1):
             piece = board[row][col]
             if (piece in color):
-                extension = get_available_moves(board, piece, row, col, True)
-                output.extend(extension)
+                selection = (piece, row, col)
+                moves = get_available_moves(board, piece, row, col, True)
+                output.extend(moves)
+    selection = temp
     return output
 
 #Ensures player cannot make a move that goes into check
@@ -307,21 +309,34 @@ def userClick():
         show_board()
         available_moves = []
         white_turn = not white_turn
+        check_win()
     #Cancel selection
     elif board[row][col] is None:
         available_moves = []
         selection = (None, -1, -1)
         show_board()
-    check_win()
 
+#Checks for checkmate and stalemate
 def check_win():
-    # if white_turn:
-    #     all_moves = all_available_moves(white)
-    # else:
-    #     all_moves = all_available_moves(black)
-    # if not all_moves and king_checked(board, )
+    global winner
+    global stalemate
+    if white_turn:
+        all_moves = all_available_moves(white)
+        if not all_moves:
+            if king_checked(board):
+                winner = black
+            else:
+                stalemate = True
+    else:
+        all_moves = all_available_moves(black)
+        if not all_moves:
+            if king_checked(board):
+                winner = white
+            else:
+                stalemate = True
     game_status()
 
+#Prints which color to move, stalemate, or winner
 def game_status():
     if winner is None:
         if white_turn:
@@ -346,6 +361,7 @@ def game_status():
     pg.display.update()
 
 show_board()
+game_status()
 
 #Run the game loop forever
 while(True):
