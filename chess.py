@@ -3,7 +3,7 @@ from pygame.locals import *
 import time
 import math
 
-#Initialize global variables
+# Initialize global variables
 white_turn = True
 winner = None
 stalemate = False
@@ -11,18 +11,18 @@ width = 480
 height = 480
 white_background = (240,217,181)
 
-#Chess 8*8 board
+# Chess 8*8 board
 size = 60
 background_board = pg.Surface((size * 8, size * 8))
 
-#Initialize pygame window
+# Initialize pygame window
 pg.init()
 fps = 30
 CLOCK = pg.time.Clock()
 screen = pg.display.set_mode((width, height + 100),0,32)
 pg.display.set_caption("Chess")
 
-#Load images
+# Load images
 w_pawn = pg.image.load('images/Chess_plt60.png')
 w_rook = pg.image.load('images/Chess_rlt60.png')
 w_bishop = pg.image.load('images/Chess_blt60.png')
@@ -36,7 +36,7 @@ b_knight = pg.image.load('images/Chess_ndt60.png')
 b_king = pg.image.load('images/Chess_kdt60.png')
 b_queen = pg.image.load('images/Chess_qdt60.png')
 
-#Resize images
+# Resize images
 w_pawn = pg.transform.scale(w_pawn, (size, size))
 w_rook = pg.transform.scale(w_rook, (size, size))
 w_bishop = pg.transform.scale(w_bishop, (size, size))
@@ -50,6 +50,7 @@ b_knight = pg.transform.scale(b_knight, (size, size))
 b_king = pg.transform.scale(b_king, (size, size))
 b_queen = pg.transform.scale(b_queen, (size, size))
 
+# Gets piece name from piece
 def get_piece_name(piece):
     output = "Unfound"
     if piece == w_pawn:
@@ -78,23 +79,25 @@ def get_piece_name(piece):
         output = "Black queen"
     return output
 
-#Classify pieces
+# Classify pieces
 white = {w_pawn, w_rook, w_bishop, w_knight, w_king, w_queen}
 black = {b_pawn, b_rook, b_bishop, b_knight, b_king, b_queen}
 
-#Set initial board
+# Set initial board
 board = [[b_rook,b_knight,b_bishop,b_queen,b_king,b_bishop,b_knight,b_rook],
         [b_pawn]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,
         [w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
 
-#Handling selected piece - Selection is formatted (piece, row, col)
+# Handling selected piece - Selection is formatted (piece, row, col)
 available_moves = []
 selection = (None, -1, -1)
 
+# Draws the piece at the row and col - does nothing if piece is None
 def draw_piece(piece, row, col):
     if piece is not None:
         screen.blit(piece,(col*size,row*size))
 
+# Draws a translucent highlight of a given color at the row and col
 def draw_highlight(color, row, col):
     center = (col*size+size/2, row*size+size/2)
     radius = 20
@@ -104,8 +107,9 @@ def draw_highlight(color, row, col):
     pg.draw.circle(shape_surf, color, (radius, radius), radius)
     screen.blit(shape_surf, target_rect)
 
+# Draws the background board and all the pieces
 def show_board():
-    #Fill and display board
+    # Fill and display board
     background_board.fill(white_background)
     for x in range(0,8,1):
         for y in range(0,8,1):
@@ -118,7 +122,7 @@ def show_board():
             piece = board[row][col]
             draw_piece(piece, row, col)
 
-#Gets all available moves for a color
+# Gets all available moves for a color
 def all_available_moves(color):
     global selection
     output = []
@@ -133,7 +137,7 @@ def all_available_moves(color):
     selection = temp
     return output
 
-#Ensures player cannot make a move that goes into check
+# Ensures player cannot make a move that goes into check
 def king_checked(hypothetical_board):
     color = white
     opposite_color = black
@@ -168,30 +172,30 @@ def in_bounds(row, col):
 def check_bounds_legality(used_board, row, col, opposite_color, legal_check):
     return in_bounds(row,col) and (not legal_check or legal_move(row,col))
 
-#Handles pawn movement
+# Handles pawn movement
 def get_pawn_moves(used_board, piece, row, col, available_moves, legal_check):
-    #White pawn
+    # White pawn
     direction = -1
     starting_row = 6
     opposite_color = black
-    #Black pawn
+    # Black pawn
     if (piece == b_pawn):
         direction = 1
         starting_row = 1
         opposite_color = white
-    #Single forward
+    # Single forward
     if check_bounds_legality(used_board, row+direction, col, opposite_color, legal_check) and used_board[row+direction][col] is None:
         available_moves.append((row+direction,col))
-        #Double forward
+        # Double forward
         if (row == starting_row and check_bounds_legality(used_board, row+2*direction, col, opposite_color, legal_check) and used_board[row+2*direction][col] is None):
             available_moves.append((row+2*direction,col)) 
-    #Captures (no en passant)
+    # Captures (no en passant)
     if check_bounds_legality(used_board, row+direction, col-1, opposite_color, legal_check) and used_board[row+direction][col-1] in opposite_color:
         available_moves.append((row+direction,col-1))
     if check_bounds_legality(used_board, row+direction, col+1, opposite_color, legal_check) and used_board[row+direction][col+1] in opposite_color:
         available_moves.append((row+direction,col+1))
 
-#Goes in a direction until stopped
+# Goes in a direction until stopped
 def go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one, legal_check):
     stop = False
     i = 1
@@ -215,27 +219,27 @@ def go_direction(used_board, row, col, opposite_color, row_direction, col_direct
             stop = True
         i = i+1
 
-#Handles bishop movement
+# Handles bishop movement
 def get_bishop_moves(used_board, piece, row, col, available_moves, stop_at_one, legal_check):
     opposite_color = black
     if (piece == b_bishop):
         opposite_color = white
-    #Go in each diagonal direction until stopped
+    # Go in each diagonal direction until stopped
     for row_direction, col_direction in [(-1,-1),(-1,1),(1,-1),(1,1)]:
         go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one, legal_check)
 
-#Handles rook movement
+# Handles rook movement
 def get_rook_moves(used_board, piece, row, col, available_moves, stop_at_one, legal_check):
     opposite_color = black
     if (piece == b_rook):
         opposite_color = white
-    #Go in each horizontal/vertical direction until stopped
+    # Go in each horizontal/vertical direction until stopped
     for row_direction, col_direction in [(-1,0),(1,0),(0,-1),(0,1)]:
         go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one, legal_check)
 
-#Handles queen movement
+# Handles queen movement
 def get_queen_moves(used_board, piece, row, col, available_moves, stop_at_one, legal_check):
-    #Queens are combinations of bishops and rooks
+    # Queens are combinations of bishops and rooks
     if piece == w_queen:
         get_bishop_moves(used_board, w_bishop, row, col, available_moves, stop_at_one, legal_check)
         get_rook_moves(used_board, w_rook, row, col, available_moves, stop_at_one, legal_check)
@@ -243,15 +247,15 @@ def get_queen_moves(used_board, piece, row, col, available_moves, stop_at_one, l
         get_bishop_moves(used_board, b_bishop, row, col, available_moves, stop_at_one, legal_check)
         get_rook_moves(used_board, b_rook, row, col, available_moves, stop_at_one, legal_check)
 
-#Handles king movement
+# Handles king movement
 def get_king_moves(used_board, piece, row, col, available_moves, legal_check):
-    #Kings are queens that can only move one square
+    # Kings are queens that can only move one square
     if piece == w_king:
         get_queen_moves(used_board, w_queen, row, col, available_moves, True, legal_check)
     elif piece == b_king:
         get_queen_moves(used_board, b_queen, row, col, available_moves, True, legal_check)
 
-#Handles knight movement
+# Handles knight movement
 def get_knight_moves(used_board, piece, row, col, available_moves, legal_check):
     opposite_color = black
     if (piece == b_knight):
@@ -259,7 +263,7 @@ def get_knight_moves(used_board, piece, row, col, available_moves, legal_check):
     for row_direction, col_direction in [(-2,-1),(-2,1),(-1,-2),(-1,2),(1,-2),(1,2),(2,-1),(2,1)]:
         go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, True, legal_check)
 
-#Finds all possible moves for a given piece in a given position
+# Finds all possible moves for a given piece in a given position
 def get_available_moves(used_board, piece, row, col, legal_check):
     available_moves = []
     if (piece == w_pawn or piece == b_pawn):
@@ -276,35 +280,36 @@ def get_available_moves(used_board, piece, row, col, legal_check):
         get_knight_moves(used_board, piece, row, col, available_moves, legal_check)
     return available_moves
 
-#Draws the highlights for all available moves
+# Draws the highlights for all available moves
 def highlight_available_moves(available_moves):
     for row, col in available_moves:
         draw_highlight((0,0,0,127), row,col)
 
+# Makes a move on a given board
 def make_move(used_board, row, col):
     used_board[row][col] = selection[0]
     used_board[selection[1]][selection[2]] = None
 
 def userClick():
-    #Get coordinates of mouse click
+    # Get coordinates of mouse click
     x,y = pg.mouse.get_pos()
     col = math.trunc(x/size)
     row = math.trunc(y/size)
     piece = board[row][col]
 
-    #Operates based on piece color and turn
+    # Operates based on piece color and turn
     global available_moves
     global selection
     global white_turn
 
-    #Choosing piece to move
+    # Choosing piece to move
     if (white_turn and piece in white) or (not white_turn and piece in black):
         show_board()
         draw_highlight((0,255,255,127),row,col)
         selection = (piece, row, col)
         available_moves = get_available_moves(board, piece, row, col, True)
         highlight_available_moves(available_moves)
-    #Make move
+    # Make move
     elif (row,col) in available_moves:
         make_move(board, row, col)
         selection = (None, -1, -1)
@@ -312,13 +317,13 @@ def userClick():
         available_moves = []
         white_turn = not white_turn
         check_win()
-    #Cancel selection
+    # Cancel selection
     elif board[row][col] is None:
         available_moves = []
         selection = (None, -1, -1)
         show_board()
 
-#Checks for checkmate and stalemate
+# Checks for checkmate and stalemate
 def check_win():
     global winner
     global stalemate
@@ -338,7 +343,7 @@ def check_win():
                 stalemate = True
     game_status()
 
-#Prints which color to move, stalemate, or winner
+# Prints which color to move, stalemate, or winner
 def game_status():
     if winner is None:
         if white_turn:
@@ -357,7 +362,7 @@ def game_status():
     font = pg.font.Font(None, 30)
     text = font.render(message, 1, (255, 255, 255))
 
-    # copy the rendered message onto the board
+    # Copy the rendered message onto the board
     text_rect = text.get_rect(center=(width/2, 580-50))
     screen.blit(text, text_rect)
     pg.display.update()
@@ -365,7 +370,7 @@ def game_status():
 show_board()
 game_status()
 
-#Run the game loop forever
+# Run the game loop forever
 while(True):
     for event in pg.event.get():
         if event.type == QUIT:
