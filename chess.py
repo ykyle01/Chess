@@ -87,10 +87,6 @@ board = [[b_rook,b_knight,b_bishop,b_queen,b_king,b_bishop,b_knight,b_rook],
         [b_pawn]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,
         [w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
 
-#Board to test stalemate - can delete
-# board = [[b_king, None, None, None, None, None, None, None],
-#         [None]*8,[w_king,None, None, None, None, None, None, w_queen],[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
-
 #Handling selected piece - Selection is formatted (piece, row, col)
 available_moves = []
 selection = (None, -1, -1)
@@ -209,10 +205,12 @@ def go_direction(used_board, row, col, opposite_color, row_direction, col_direct
             if used_board[row_adjusted][col_adjusted] is None:
                 available_moves.append((row_adjusted, col_adjusted))
             elif used_board[row_adjusted][col_adjusted] in opposite_color:
-                available_moves.append((row_adjusted,col_adjusted))
+                available_moves.append((row_adjusted, col_adjusted))
                 stop = True
             else:
                 stop = True
+        else:
+            stop = True
         if stop_at_one:
             stop = True
         i = i+1
