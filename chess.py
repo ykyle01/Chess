@@ -196,7 +196,10 @@ def go_direction(used_board, row, col, opposite_color, row_direction, col_direct
     while not stop:
         row_adjusted = row+i*row_direction
         col_adjusted = col+i*col_direction
-        if in_bounds(row_adjusted, col_adjusted) and (not legal_check or legal_move(row_adjusted, col_adjusted)):
+        if not in_bounds(row_adjusted, col_adjusted):
+            stop = True
+            break
+        if (not legal_check or legal_move(row_adjusted, col_adjusted)):
             if used_board[row_adjusted][col_adjusted] is None:
                 available_moves.append((row_adjusted, col_adjusted))
             elif used_board[row_adjusted][col_adjusted] in opposite_color:
@@ -204,8 +207,6 @@ def go_direction(used_board, row, col, opposite_color, row_direction, col_direct
                 stop = True
             else:
                 stop = True
-        else:
-            stop = True
         if stop_at_one:
             stop = True
         i = i+1
