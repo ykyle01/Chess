@@ -172,10 +172,10 @@ def king_checked(used_board):
     return opposite_reachable(used_board, king_position)
 
 def legal_move(row, col):
-    hypothetical_board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
+    hypothetical_board = board.copy()
     for i in range(0,8,1):
         hypothetical_board[i] = board[i].copy()
-    make_move(hypothetical_board, row, col)
+    make_move(hypothetical_board, row, col, False)
     return not king_checked(hypothetical_board)
 
 def in_bounds(row, col):
@@ -328,10 +328,48 @@ def highlight_available_moves(available_moves):
         draw_highlight((0,0,0,127), row,col)
 
 # Makes a move on a given board
-def make_move(used_board, row, col):
+def make_move(used_board, row, col, actual_move):
+    # Castle
+    global w_kingside
+    global w_queenside
+    global b_kingside
+    global b_queenside
+    if selection[0] == w_king and w_kingside and (row,col) == (7,6):
+        used_board[7][7] = None
+        used_board[7][5] = w_rook
+    elif selection[0] == w_king and w_queenside and (row,col) == (7,2):
+        used_board[7][0] = None
+        used_board[7][3] = w_rook
+    elif selection[0] == b_king and b_kingside and (row,col) == (0,6):
+        used_board[0][7] = None
+        used_board[0][5] = b_rook
+    elif selection[0] == b_king and b_queenside and (row,col) == (0,2):
+        used_board[0][0] = None
+        used_board[0][3] = b_rook
+
+    # Checks if associated king or rook moved for castling
+    if actual_move:
+        if selection[0] == w_king:
+            w_kingside = False
+            w_queenside = False
+        elif selection[0] == b_king:
+            b_kingside = False
+            b_queenside = False
+        elif selection[0] == w_rook:
+            if (row,col) == (7,7):
+                w_kingside = False
+            elif (row,col) == (7,0):
+                w_queenside = False
+        elif selection[0] == b_rook:
+            if (row,col) == (0,7):
+                b_kingside = False
+            elif (row,col) == (0,0):
+                b_queenside = False
+
+    # Normal move
     used_board[row][col] = selection[0]
     used_board[selection[1]][selection[2]] = None
-    
+
 
 def userClick():
     # Get coordinates of mouse click
@@ -354,7 +392,7 @@ def userClick():
         highlight_available_moves(available_moves)
     # Make move
     elif (row,col) in available_moves:
-        make_move(board, row, col)
+        make_move(board, row, col, True)
         selection = (None, -1, -1)
         show_board()
         available_moves = []
