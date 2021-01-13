@@ -11,6 +11,12 @@ width = 480
 height = 480
 white_background = (240,217,181)
 
+# Castling global variables - turns false if associated king or rook moves
+w_kingside = True
+w_queenside = True
+b_kingside = True
+b_queenside = True
+
 # Chess 8*8 board
 size = 60
 background_board = pg.Surface((size * 8, size * 8))
@@ -137,27 +143,33 @@ def all_available_moves(color):
     selection = temp
     return output
 
-# Ensures player cannot make a move that goes into check
-def king_checked(hypothetical_board):
-    color = white
+# Returns whether a position is reachable by an opponent's piece
+def opposite_reachable(used_board, position):
     opposite_color = black
-    king_position = (-1,-1)
     if not white_turn:
-        color = black
         opposite_color = white
     for row in range(0,8,1):
         for col in range(0,8,1):
-            piece = hypothetical_board[row][col]
-            if (color == white and piece == w_king) or (color == black and piece == b_king):
-                king_position = (row,col)
-    for row in range(0,8,1):
-        for col in range(0,8,1):
-            piece = hypothetical_board[row][col]
+            piece = used_board[row][col]
             if (piece in opposite_color):
-                moves = get_available_moves(hypothetical_board, piece, row, col, False) 
-                if (king_position in moves):
+                moves = get_available_moves(used_board, piece, row, col, False) 
+                if (position in moves):
                     return True
     return False
+
+# Ensures player cannot make a move that goes into check
+def king_checked(used_board):
+    color = white
+    king_position = (-1,-1)
+    if not white_turn:
+        color = black
+    # Finds corresponding king
+    for row in range(0,8,1):
+        for col in range(0,8,1):
+            piece = used_board[row][col]
+            if (color == white and piece == w_king) or (color == black and piece == b_king):
+                king_position = (row,col)
+    return opposite_reachable(used_board, king_position)
 
 def legal_move(row, col):
     hypothetical_board = [[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8,[None]*8]
@@ -247,13 +259,43 @@ def get_queen_moves(used_board, piece, row, col, available_moves, stop_at_one, l
         get_bishop_moves(used_board, b_bishop, row, col, available_moves, stop_at_one, legal_check)
         get_rook_moves(used_board, b_rook, row, col, available_moves, stop_at_one, legal_check)
 
+# Helper function for castling to check squares are unattacked and empty
+def check_between(used_board, range):
+    for row, col in range:
+        # Check empty
+        if used_board[row][col] is not None:
+            return False
+        # Checks not attacked
+        if opposite_reachable(used_board, (row,col)):
+            return False
+    return True
+
+# Checks castling
+def check_castling(used_board, castle):
+    if castle == "w_kingside":
+        return w_kingside and not king_checked(used_board) and check_between(used_board, [(7,5),(7,6)])
+    elif castle == "w_queenside":
+        return w_queenside and not king_checked(used_board) and check_between(used_board, [(7,1),(7,2),(7,3)])
+    elif castle == "b_kingside":
+        return b_kingside and not king_checked(used_board) and check_between(used_board, [(0,5),(0,6)])
+    elif castle == "b_queenside":
+        return b_queenside and not king_checked(used_board) and check_between(used_board, [(0,1),(0,2),(0,3)])
+    
 # Handles king movement
 def get_king_moves(used_board, piece, row, col, available_moves, legal_check):
     # Kings are queens that can only move one square
     if piece == w_king:
         get_queen_moves(used_board, w_queen, row, col, available_moves, True, legal_check)
+        if not legal_check or check_castling(used_board, "w_kingside"):
+            available_moves.append((7,6))
+        if not legal_check or check_castling(used_board, "w_queenside"):
+            available_moves.append((7,2))
     elif piece == b_king:
         get_queen_moves(used_board, b_queen, row, col, available_moves, True, legal_check)
+        if not legal_check or check_castling(used_board, "b_kingside"):
+            available_moves.append((0,6))
+        if not legal_check or check_castling(used_board, "b_queenside"):
+            available_moves.append((0,2))
 
 # Handles knight movement
 def get_knight_moves(used_board, piece, row, col, available_moves, legal_check):
@@ -289,6 +331,7 @@ def highlight_available_moves(available_moves):
 def make_move(used_board, row, col):
     used_board[row][col] = selection[0]
     used_board[selection[1]][selection[2]] = None
+    
 
 def userClick():
     # Get coordinates of mouse click
