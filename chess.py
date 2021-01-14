@@ -339,11 +339,13 @@ def highlight_available_moves(available_moves):
 
 # Makes a move on a given board
 def make_move(used_board, row, col, actual_move):
-    # Castle
     global w_kingside
     global w_queenside
     global b_kingside
     global b_queenside
+    global passant_col
+
+    # Castle
     if selection[0] == w_king and w_kingside and (row,col) == (7,6):
         used_board[7][7] = None
         used_board[7][5] = w_rook
@@ -357,7 +359,12 @@ def make_move(used_board, row, col, actual_move):
         used_board[0][0] = None
         used_board[0][3] = b_rook
 
-    global passant_col
+    # En passant
+    if selection[0] == w_pawn and selection[1] == 3 and col == passant_col:
+        used_board[3][col] = None
+    elif selection[0] == b_pawn and selection[1] == 4 and col == passant_col:
+        used_board[4][col] = None
+
     double_forward = False
     if actual_move:
         # Checks if associated king or rook moved for castling
