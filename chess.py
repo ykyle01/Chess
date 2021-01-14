@@ -17,6 +17,9 @@ w_queenside = True
 b_kingside = True
 b_queenside = True
 
+# En passant global variable - gives column of pawn for en passant or -1 if not available
+passant_col = -1
+
 # Chess 8*8 board
 size = 60
 background_board = pg.Surface((size * 8, size * 8))
@@ -171,6 +174,7 @@ def king_checked(used_board):
                 king_position = (row,col)
     return opposite_reachable(used_board, king_position)
 
+# Makes sure king is not checked after making a hypothetical move
 def legal_move(row, col):
     hypothetical_board = board.copy()
     for i in range(0,8,1):
@@ -178,6 +182,7 @@ def legal_move(row, col):
     make_move(hypothetical_board, row, col, False)
     return not king_checked(hypothetical_board)
 
+# Returns whether a position is in the 8x8 board
 def in_bounds(row, col):
     return 0<=row and row<=7 and 0<=col and col<=7
 
@@ -201,11 +206,15 @@ def get_pawn_moves(used_board, piece, row, col, available_moves, legal_check):
         # Double forward
         if (row == starting_row and check_bounds_legality(used_board, row+2*direction, col, opposite_color, legal_check) and used_board[row+2*direction][col] is None):
             available_moves.append((row+2*direction,col)) 
-    # Captures (no en passant)
+    # Normal captures
     if check_bounds_legality(used_board, row+direction, col-1, opposite_color, legal_check) and used_board[row+direction][col-1] in opposite_color:
         available_moves.append((row+direction,col-1))
     if check_bounds_legality(used_board, row+direction, col+1, opposite_color, legal_check) and used_board[row+direction][col+1] in opposite_color:
         available_moves.append((row+direction,col+1))
+    # En passant
+    if (piece == w_pawn and row == 3) or (piece == b_pawn and row == 4):
+        if in_bounds(row+direction,passant_col) and (passant_col == col+1) or (passant_col == col-1):
+            available_moves.append((row+direction,passant_col))
 
 # Goes in a direction until stopped
 def go_direction(used_board, row, col, opposite_color, row_direction, col_direction, available_moves, stop_at_one, legal_check):
@@ -284,6 +293,7 @@ def check_castling(used_board, castle):
 # Handles king movement
 def get_king_moves(used_board, piece, row, col, available_moves, legal_check):
     # Kings are queens that can only move one square
+    # Checks if castling is available
     if piece == w_king:
         get_queen_moves(used_board, w_queen, row, col, available_moves, True, legal_check)
         if not legal_check or check_castling(used_board, "w_kingside"):
@@ -347,8 +357,10 @@ def make_move(used_board, row, col, actual_move):
         used_board[0][0] = None
         used_board[0][3] = b_rook
 
-    # Checks if associated king or rook moved for castling
+    global passant_col
+    double_forward = False
     if actual_move:
+        # Checks if associated king or rook moved for castling
         if selection[0] == w_king:
             w_kingside = False
             w_queenside = False
@@ -365,6 +377,16 @@ def make_move(used_board, row, col, actual_move):
                 b_kingside = False
             elif (row,col) == (0,0):
                 b_queenside = False
+        # Checks if pawn double forward for en passant
+        elif selection[0] == w_pawn and selection[1] == 6 and row == 4:
+            passant_col = col
+            double_forward = True
+        elif selection[0] == b_pawn and selection[1] == 1 and row == 3:
+            passant_col = col
+            double_forward = True
+        # En passant becomes unavailable after in between turn
+        if not double_forward:
+            passant_col = -1
 
     # Normal move
     used_board[row][col] = selection[0]
