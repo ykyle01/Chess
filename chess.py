@@ -20,6 +20,9 @@ b_queenside = True
 # En passant global variable - gives column of pawn for en passant or -1 if not available
 passant_col = -1
 
+# Promoting global variable
+promoting = False
+
 # Chess 8*8 board
 size = 60
 background_board = pg.Surface((size * 8, size * 8))
@@ -344,6 +347,8 @@ def make_move(used_board, row, col, actual_move):
     global b_kingside
     global b_queenside
     global passant_col
+    global promoting
+    global selection
 
     # Castle
     if selection[0] == w_king and w_kingside and (row,col) == (7,6):
@@ -394,45 +399,77 @@ def make_move(used_board, row, col, actual_move):
         # En passant becomes unavailable after in between turn
         if not double_forward:
             passant_col = -1
+        # Promoting
+        if (selection[0] == w_pawn and row == 0) or (selection[0] == b_pawn and row == 7):
+            promoting = True
+            used_board[row][col] = selection[0]
+            used_board[selection[1]][selection[2]] = None
+            show_board()
+            selection = (selection[0], row, col)
 
     # Normal move
     used_board[row][col] = selection[0]
     used_board[selection[1]][selection[2]] = None
 
+# Classifies which piece selected to promote to and does promotion
+def promote(promote_x, promote_y):
+    global available_moves
+    global selection
+    global white_turn
+    global promoting
+    pieces = [w_queen, w_rook, w_bishop, w_knight]
+    if selection[0] == b_pawn:
+        pieces = [b_queen, b_rook, b_bishop, b_knight]
+    if 520 <= promote_y and promote_y <= 580:
+        index = math.trunc(promote_x/60 - 2)
+        if 0 <= index and index <= 3:
+            board[selection[1]][selection[2]] = pieces[index]
+            promoting = False
+            selection = (None, -1, -1)
+            show_board()
+            available_moves = []
+            white_turn = not white_turn
+            check_win()
 
 def userClick():
-    # Get coordinates of mouse click
-    x,y = pg.mouse.get_pos()
-    col = math.trunc(x/size)
-    row = math.trunc(y/size)
-    piece = board[row][col]
-
     # Operates based on piece color and turn
     global available_moves
     global selection
     global white_turn
+    global promoting
 
-    # Choosing piece to move
-    if (white_turn and piece in white) or (not white_turn and piece in black):
-        show_board()
-        draw_highlight((0,255,255,127),row,col)
-        selection = (piece, row, col)
-        available_moves = get_available_moves(board, piece, row, col, True)
-        highlight_available_moves(available_moves)
-    # Make move
-    elif (row,col) in available_moves:
-        make_move(board, row, col, True)
-        selection = (None, -1, -1)
-        show_board()
-        available_moves = []
-        white_turn = not white_turn
-        check_win()
-    # Cancel selection
-    elif board[row][col] is None:
-        available_moves = []
-        selection = (None, -1, -1)
-        show_board()
-
+    # Get coordinates of mouse click
+    x,y = pg.mouse.get_pos()
+    col = math.trunc(x/size)
+    row = math.trunc(y/size)
+    if in_bounds(row, col):
+        piece = board[row][col]
+        if not promoting:
+            # Choosing piece to move
+            if (white_turn and piece in white) or (not white_turn and piece in black):
+                show_board()
+                draw_highlight((0,255,255,127),row,col)
+                selection = (piece, row, col)
+                available_moves = get_available_moves(board, piece, row, col, True)
+                highlight_available_moves(available_moves)
+            # Make move
+            elif (row,col) in available_moves:
+                make_move(board, row, col, True)
+                if not promoting:
+                    selection = (None, -1, -1)
+                    show_board()
+                    available_moves = []
+                    white_turn = not white_turn
+                check_win()
+            # Cancel selection
+            elif board[row][col] is None:
+                available_moves = []
+                selection = (None, -1, -1)
+                show_board()
+    elif promoting:
+        # Promoting
+        promote(x,y)
+        
 # Checks for checkmate and stalemate
 def check_win():
     global winner
@@ -467,13 +504,28 @@ def game_status():
             message = "Black won!"
     if stalemate:
         message = "Stalemate"
+    if promoting:
+        message = "Promote to"
     
-    screen.fill ((0, 0, 0), (0, 480, 480, 100))
+    screen.fill((0, 0, 0), (0, 480, 480, 100))
     font = pg.font.Font(None, 30)
     text = font.render(message, 1, (255, 255, 255))
 
     # Copy the rendered message onto the board
     text_rect = text.get_rect(center=(width/2, 580-50))
+    if promoting:
+        text_rect = text.get_rect(center=(width/2, 500))
+        screen.fill((255, 255, 255), (120, 520, 240, 60))
+        if selection[0] == w_pawn:
+            screen.blit(w_queen,(120, 520))
+            screen.blit(w_rook,(180, 520))
+            screen.blit(w_bishop,(240, 520))
+            screen.blit(w_knight,(300, 520))
+        else:
+            screen.blit(b_queen,(120, 520))
+            screen.blit(b_rook,(180, 520))
+            screen.blit(b_bishop,(240, 520))
+            screen.blit(b_knight,(300, 520))
     screen.blit(text, text_rect)
     pg.display.update()
 
