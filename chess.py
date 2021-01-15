@@ -499,9 +499,9 @@ def game_status():
             message = "Black's Turn to Move"
     else:
         if winner is white:
-            message = "White won!"
+            message = "White won! Press SPACE to play again"
         else:
-            message = "Black won!"
+            message = "Black won! Press SPACE to play again"
     if stalemate:
         message = "Stalemate"
     if promoting:
@@ -532,14 +532,46 @@ def game_status():
 show_board()
 game_status()
 
+def reset():
+    global board
+    global white_turn
+    global winner
+    global stalemate
+    global w_kingside
+    global w_queenside
+    global b_kingside
+    global b_queenside
+    global passant_col
+    global promoting
+    global available_moves
+    global selection
+    board = [[b_rook,b_knight,b_bishop,b_queen,b_king,b_bishop,b_knight,b_rook],
+        [b_pawn]*8,[None]*8,[None]*8,[None]*8,[None]*8,[w_pawn]*8,
+        [w_rook,w_knight,w_bishop,w_queen,w_king,w_bishop,w_knight,w_rook]]
+    white_turn = True
+    winner = None
+    stalemate = False
+    w_kingside = True
+    w_queenside = True
+    b_kingside = True
+    b_queenside = True
+    passant_col = -1
+    promoting = False
+    available_moves = []
+    selection = (None, -1, -1)
+    show_board()
+    game_status()
+
 # Run the game loop forever
 while(True):
     for event in pg.event.get():
-        if event.type == QUIT:
+        if event.type == pg.QUIT:
             pg.quit()
             sys.exit()
-        elif event.type == MOUSEBUTTONDOWN:
+        elif event.type == pg.MOUSEBUTTONDOWN:
             userClick()
-
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_SPACE:
+                reset()
     pg.display.update()
     CLOCK.tick(fps)
